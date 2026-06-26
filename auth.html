@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Register - UniHouse Kenya</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="auth-container">
+    <div class="auth-card fade-in">
+      <div class="logo">
+        <i class="fas fa-home"></i>
+        <h2>UniHouse Kenya</h2>
+        <p class="text-muted">University House Hunting System</p>
+      </div>
+
+      <ul class="nav nav-tabs" id="authTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Login</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Register</button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <!-- Login Form -->
+        <div class="tab-pane fade show active" id="login" role="tabpanel">
+          <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="loginEmail" required placeholder="your@email.com">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input type="password" class="form-control" id="loginPassword" required placeholder="Enter password">
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-2"><i class="fas fa-sign-in-alt"></i> Login</button>
+            <p class="text-center text-muted mb-0">
+              <small>Don't have an account? <a href="#" onclick="switchTab('register')">Register here</a></small>
+            </p>
+          </form>
+        </div>
+
+        <!-- Register Form -->
+        <div class="tab-pane fade" id="register" role="tabpanel">
+          <form id="registerForm" onsubmit="handleRegister(event)">
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" id="regName" required placeholder="John Doe">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="regEmail" required placeholder="your@email.com">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" class="form-control" id="regPhone" placeholder="0712345678">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input type="password" class="form-control" id="regPassword" required minlength="6" placeholder="At least 6 characters">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">I am a...</label>
+              <select class="form-select" id="regRole" title="Select your role">
+                <option value="student">Student</option>
+                <option value="landlord">Landlord</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-success w-100"><i class="fas fa-user-plus"></i> Create Account</button>
+            <p class="text-center text-muted mt-2 mb-0">
+              <small>Already have an account? <a href="#" onclick="switchTab('login')">Login here</a></small>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    initDB();
+
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      window.location.href = 'dashboard.html';
+    }
+
+    function switchTab(tabId) {
+      const tab = new bootstrap.Tab(document.getElementById(tabId + '-tab'));
+      tab.show();
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      if (!email || !password) {
+        showToast('Please fill in all fields', 'error');
+        return;
+      }
+
+      const result = loginUser(email, password);
+      if (result.success) {
+        setCurrentUser(result.user);
+        showToast('Login successful!', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+      } else {
+        showToast(result.message, 'error');
+      }
+    }
+
+    function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const phone = document.getElementById('regPhone').value;
+      const password = document.getElementById('regPassword').value;
+      const role = document.getElementById('regRole').value;
+
+      if (!name || !email || !password) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        showToast('Please enter a valid email address', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+      }
+
+      const user = { name, email, phone, password, role };
+      const result = registerUser(user);
+
+      if (result.success) {
+        showToast('Registration successful! Please login.', 'success');
+        document.getElementById('registerForm').reset();
+        switchTab('login');
+      } else {
+        showToast(result.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

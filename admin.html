@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - UniHouse Kenya</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+  <div id="main-navigation"></div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Admin Sidebar -->
+      <div class="col-md-2 admin-sidebar d-none d-md-block">
+        <div class="text-center mb-4 px-3">
+          <h5 class="text-white"><i class="fas fa-shield-alt"></i> Admin</h5>
+        </div>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a class="nav-link active" href="#" onclick="showAdminSection('overview')"><i class="fas fa-tachometer-alt"></i> Overview</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showAdminSection('users')"><i class="fas fa-users"></i> Users</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showAdminSection('listings')"><i class="fas fa-home"></i> Listings</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showAdminSection('universities')"><i class="fas fa-university"></i> Universities</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showAdminSection('reviews')"><i class="fas fa-star"></i> Reviews</a></li>
+          <li class="nav-item"><a class="nav-link" href="dashboard.html"><i class="fas fa-arrow-left"></i> Back</a></li>
+        </ul>
+      </div>
+
+      <!-- Mobile sidebar -->
+      <div class="col-12 d-md-none mb-3">
+        <div class="btn-group w-100" role="group">
+          <button class="btn btn-outline-primary btn-sm" onclick="showAdminSection('overview')">Overview</button>
+          <button class="btn btn-outline-primary btn-sm" onclick="showAdminSection('users')">Users</button>
+          <button class="btn btn-outline-primary btn-sm" onclick="showAdminSection('listings')">Listings</button>
+          <button class="btn btn-outline-primary btn-sm" onclick="showAdminSection('universities')">Unis</button>
+          <button class="btn btn-outline-primary btn-sm" onclick="showAdminSection('reviews')">Reviews</button>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="col-md-10 py-4">
+        <div id="admin-content">
+          <div class="text-center py-5">
+            <i class="fas fa-spinner fa-spin" style="font-size: 3rem;"></i>
+            <p class="mt-3">Loading admin panel...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    initDB();
+
+    const user = getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      window.location.href = 'auth.html';
+    }
+
+    renderNavigation();
+    renderFooter();
+
+    // Overview section
+    function showAdminSection(section) {
+      document.querySelectorAll('.admin-sidebar .nav-link').forEach(l => l.classList.remove('active'));
+      event?.target?.closest?.('.nav-link')?.classList?.add('active');
+
+      const container = document.getElementById('admin-content');
+
+      switch(section) {
+        case 'overview': loadAdminOverview(container); break;
+        case 'users': loadAdminUsers(container); break;
+        case 'listings': loadAdminListings(container); break;
+        case 'universities': loadAdminUniversities(container); break;
+        case 'reviews': loadAdminReviews(container); break;
+      }
+    }
+
+    // OVERVIEW
+    function loadAdminOverview(container) {
+      const stats = getSystemStats();
+
+      container.innerHTML = `
+        <h3 class="fw-bold mb-4"><i class="fas fa-tachometer-alt"></i> System Overview</h3>
+
+        <div class="dashboard-stats">
+          <div class="stat-card blue">
+            <i class="fas fa-users"></i>
+            <div class="number">${stats.totalUsers}</div>
+            <div class="label">Total Users</div>
+            <small class="text-muted">${stats.totalStudents} Students, ${stats.totalLandlords} Landlords</small>
+          </div>
+          <div class="stat-card green">
+            <i class="fas fa-home"></i>
+            <div class="number">${stats.totalListings}</div>
+            <div class="label">Total Listings</div>
+            <small class="text-muted">${stats.availableListings} Available</small>
+          </div>
+          <div class="stat-card orange">
+            <i class="fas fa-star"></i>
+            <div class="number">${stats.totalReviews}</div>
+            <div class="label">Total Reviews</div>
+          </div>
+          <div class="stat-card red">
+            <i class="fas fa-eye"></i>
+            <div class="number">${stats.totalViews}</div>
+            <div class="label">Total Views</div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Listing Status</h5>
+              </div>
+              <div class="card-body">
+                <div class="mb-2">
+                  <div class="d-flex justify-content-between">
+                    <span>Available</span>
+                    <span class="fw-bold">${stats.availableListings}</span>
+                  </div>
+                  <div class="progress" style="height:20px;">
+                    <div class="progress-bar bg-success" style="width:${stats.totalListings > 0 ? (stats.availableListings/stats.totalListings*100) : 0}%">${stats.totalListings > 0 ? Math.round(stats.availableListings/stats.totalListings*100) : 0}%</div>
+                  </div>
+                </div>
+                <div class="mb-2">
+                  <div class="d-flex justify-content-between">
+                    <span>Rented</span>
+                    <span class="fw-bold">${stats.rentedListings}</span>
+                  </div>
+                  <div class="progress" style="height:20px;">
+                    <div class="progress-bar bg-danger" style="width:${stats.totalListings > 0 ? (stats.rentedListings/stats.totalListings*100) : 0}%">${stats.totalListings > 0 ? Math.round(stats.rentedListings/stats.totalListings*100) : 0}%</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="d-flex justify-content-between">
+                    <span>Pending</span>
+                    <span class="fw-bold">${stats.pendingListings}</span>
+                  </div>
+                  <div class="progress" style="height:20px;">
+                    <div class="progress-bar bg-warning" style="width:${stats.totalListings > 0 ? (stats.pendingListings/stats.totalListings*100) : 0}%">${stats.totalListings > 0 ? Math.round(stats.pendingListings/stats.totalListings*100) : 0}%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-envelope"></i> System Activity</h5>
+              </div>
+              <div class="card-body">
+                <p><i class="fas fa-envelope text-primary"></i> Total Messages: <strong>${stats.totalMessages}</strong></p>
+                <p><i class="fas fa-star text-warning"></i> Total Reviews: <strong>${stats.totalReviews}</strong></p>
+                <p><i class="fas fa-eye text-info"></i> Total Page Views: <strong>${stats.totalViews}</strong></p>
+                <p><i class="fas fa-users text-success"></i> Students: <strong>${stats.totalStudents}</strong> | Landlords: <strong>${stats.totalLandlords}</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // USERS
+    function loadAdminUsers(container) {
+      const users = getUsers();
+
+      container.innerHTML = `
+        <h3 class="fw-bold mb-4"><i class="fas fa-users"></i> User Management</h3>
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${users.length === 0 ? '<tr><td colspan="7" class="text-center">No registered users yet</td></tr>' : ''}
+                  ${users.map(u => `
+                    <tr>
+                      <td>${u.id}</td>
+                      <td>${u.name}</td>
+                      <td>${u.email}</td>
+                      <td>${u.phone || '-'}</td>
+                      <td><span class="badge ${u.role === 'landlord' ? 'bg-warning' : 'bg-info'}">${u.role}</span></td>
+                      <td>${u.createdAt}</td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="adminDeleteUser(${u.id})"><i class="fas fa-trash"></i></button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function adminDeleteUser(userId) {
+      if (!confirm('Delete this user? This cannot be undone.')) return;
+      let users = getUsers();
+      users = users.filter(u => u.id !== userId);
+      saveUsers(users);
+      showToast('User deleted', 'success');
+      loadAdminUsers(document.getElementById('admin-content'));
+    }
+
+    // LISTINGS MANAGEMENT
+    function loadAdminListings(container) {
+      const listings = getListings();
+
+      container.innerHTML = `
+        <h3 class="fw-bold mb-4"><i class="fas fa-home"></i> Listings Management</h3>
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Landlord</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Views</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${listings.map(l => {
+                    const users = getUsers();
+                    const landlord = users.find(u => u.id === l.landlordId);
+                    return `
+                      <tr>
+                        <td>${l.id}</td>
+                        <td><a href="listing-detail.html?id=${l.id}" target="_blank">${truncateText(l.title, 30)}</a></td>
+                        <td>${landlord ? landlord.name : 'Unknown'}</td>
+                        <td>${formatPrice(l.price)}</td>
+                        <td>${getStatusBadge(l.status)}</td>
+                        <td>${l.views || 0}</td>
+                        <td>
+                          <select class="form-select form-select-sm d-inline w-auto" onchange="adminChangeStatus(${l.id}, this.value)" title="Change status">
+                            <option value="available" ${l.status === 'available' ? 'selected' : ''}>Available</option>
+                            <option value="rented" ${l.status === 'rented' ? 'selected' : ''}>Rented</option>
+                            <option value="pending" ${l.status === 'pending' ? 'selected' : ''}>Pending</option>
+                          </select>
+                          <button class="btn btn-sm btn-danger" onclick="adminDeleteListing(${l.id})"><i class="fas fa-trash"></i></button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function adminChangeStatus(listingId, newStatus) {
+      const listing = getListing(listingId);
+      if (listing) {
+        listing.status = newStatus;
+        updateListing(listing);
+        showToast(`Status changed to ${newStatus}`, 'success');
+        loadAdminListings(document.getElementById('admin-content'));
+      }
+    }
+
+    function adminDeleteListing(listingId) {
+      if (!confirm('Delete this listing?')) return;
+      deleteListing(listingId);
+      showToast('Listing deleted', 'success');
+      loadAdminListings(document.getElementById('admin-content'));
+    }
+
+    // UNIVERSITIES
+    function loadAdminUniversities(container) {
+      const universities = getUniversities();
+
+      container.innerHTML = `
+        <h3 class="fw-bold mb-4"><i class="fas fa-university"></i> University Management</h3>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5>Add New University</h5>
+            <form onsubmit="adminAddUniversity(event)" class="row g-2">
+              <div class="col-md-3">
+                <input type="text" class="form-control" id="au-name" placeholder="University Name" required>
+              </div>
+              <div class="col-md-2">
+                <input type="text" class="form-control" id="au-town" placeholder="Town" required>
+              </div>
+              <div class="col-md-2">
+                <input type="text" class="form-control" id="au-county" placeholder="County" required>
+              </div>
+              <div class="col-md-2">
+                <input type="number" step="0.0001" class="form-control" id="au-lat" placeholder="Latitude" required>
+              </div>
+              <div class="col-md-2">
+                <input type="number" step="0.0001" class="form-control" id="au-lng" placeholder="Longitude" required>
+              </div>
+              <div class="col-md-1">
+                <button type="submit" class="btn btn-success"><i class="fas fa-plus"></i></button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Town</th>
+                    <th>County</th>
+                    <th>Coordinates</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${universities.map(u => `
+                    <tr>
+                      <td>${u.id}</td>
+                      <td><strong>${u.name}</strong></td>
+                      <td>${u.town}</td>
+                      <td>${u.county}</td>
+                      <td>${u.lat}, ${u.lng}</td>
+                      <td>
+                        <button class="btn btn-sm btn-danger" onclick="adminDeleteUniversity(${u.id})"><i class="fas fa-trash"></i></button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function adminAddUniversity(e) {
+      e.preventDefault();
+      const universities = getUniversities();
+      const newUni = {
+        id: universities.length > 0 ? Math.max(...universities.map(u => u.id)) + 1 : 1,
+        name: document.getElementById('au-name').value,
+        town: document.getElementById('au-town').value,
+        county: document.getElementById('au-county').value,
+        lat: parseFloat(document.getElementById('au-lat').value),
+        lng: parseFloat(document.getElementById('au-lng').value),
+        image: 'https://images.unsplash.com/photo-1562774053-701939374585?w=400&h=250&fit=crop'
+      };
+      universities.push(newUni);
+      localStorage.setItem('uhs_universities', JSON.stringify(universities));
+      showToast('University added!', 'success');
+      document.getElementById('au-name').value = '';
+      document.getElementById('au-town').value = '';
+      document.getElementById('au-county').value = '';
+      document.getElementById('au-lat').value = '';
+      document.getElementById('au-lng').value = '';
+      loadAdminUniversities(document.getElementById('admin-content'));
+    }
+
+    function adminDeleteUniversity(id) {
+      if (!confirm('Delete this university? All associated listings will remain but will have no university.')) return;
+      let universities = getUniversities();
+      universities = universities.filter(u => u.id !== id);
+      localStorage.setItem('uhs_universities', JSON.stringify(universities));
+      showToast('University deleted', 'success');
+      loadAdminUniversities(document.getElementById('admin-content'));
+    }
+
+    // REVIEWS MODERATION
+    function loadAdminReviews(container) {
+      const reviews = getReviews();
+
+      container.innerHTML = `
+        <h3 class="fw-bold mb-4"><i class="fas fa-star"></i> Review Moderation</h3>
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Listing</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reviews.length === 0 ? '<tr><td colspan="7" class="text-center">No reviews yet</td></tr>' : ''}
+                  ${reviews.map(r => {
+                    const listing = getListing(r.listingId);
+                    return `
+                      <tr>
+                        <td>${r.id}</td>
+                        <td>${r.userName}</td>
+                        <td>${listing ? truncateText(listing.title, 20) : 'Deleted'}</td>
+                        <td><span class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span></td>
+                        <td>${truncateText(r.comment, 40)}</td>
+                        <td>${r.date}</td>
+                        <td>
+                          <button class="btn btn-sm btn-danger" onclick="adminDeleteReview(${r.id})"><i class="fas fa-trash"></i></button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function adminDeleteReview(reviewId) {
+      if (!confirm('Delete this review?')) return;
+      let reviews = getReviews();
+      reviews = reviews.filter(r => r.id !== reviewId);
+      saveReviews(reviews);
+      showToast('Review deleted', 'success');
+      loadAdminReviews(document.getElementById('admin-content'));
+    }
+
+    // Load overview by default
+    showAdminSection('overview');
+  </script>
+</body>
+</html>
