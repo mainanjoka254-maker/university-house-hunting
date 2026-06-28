@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payments - UniHouse Kenya</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .payment-card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 2rem;
+    }
+    .mpesa-logo {
+      font-size: 3rem;
+      color: #4bb543;
+    }
+    .amount-display {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--dark);
+    }
+    .transaction-code {
+      font-family: 'Courier New', monospace;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: var(--primary-light);
+      background: #e3f2fd;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      display: inline-block;
+    }
+    .status-badge-payment {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .status-completed { background: #d4edda; color: #155724; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-failed { background: #f8d7da; color: #721c24; }
+    .status-refunded { background: #e2e3e5; color: #383d41; }
+    
+    .payment-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .payment-step .step-number {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .payment-step .step-content {
+      flex-grow: 1;
+    }
+    .payment-step .step-content h6 {
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+    .payment-step .step-content p {
+      color: var(--gray);
+      font-size: 0.9rem;
+      margin-bottom: 0;
+    }
+
+    .phone-input-group {
+      position: relative;
+    }
+    .phone-input-group .prefix {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: 600;
+      color: var(--gray);
+      z-index: 5;
+    }
+    .phone-input-group input {
+      padding-left: 50px !important;
+    }
+
+    .success-animation {
+      text-align: center;
+      padding: 2rem;
+    }
+    .success-animation .check-icon {
+      font-size: 5rem;
+      color: var(--secondary);
+      animation: scaleIn 0.5s ease;
+    }
+    @keyframes scaleIn {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .payment-timeline {
+      position: relative;
+      padding-left: 30px;
+    }
+    .payment-timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #e0e0e0;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -24px;
+      top: 5px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      border: 2px solid white;
+    }
+    .timeline-item.completed::before { background: var(--secondary); }
+    .timeline-item.failed::before { background: var(--accent); }
+    .timeline-item.pending::before { background: var(--warning); }
+  </style>
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+  <div id="main-navigation"></div>
+
+  <div class="container py-4">
+    <div id="payment-content">
+      <div class="text-center py-5">
+        <i class="fas fa-spinner fa-spin" style="font-size: 3rem;"></i>
+        <p class="mt-3">Loading payment portal...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="main-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/payment.js"></script>
+  <script>
+    initDB();
+
+    const user = getCurrentUser();
+    if (!user) {
+      window.location.href = 'auth.html';
+    }
+
+    renderNavigation();
+    renderFooter();
+
+    const urlListingId = getUrlParam('listing');
+    const urlAction = getUrlParam('action');
+
+    function loadPaymentPage() {
+      const container = document.getElementById('payment-content');
+
+      if (urlListingId) {
+        // Show payment for a specific listing
+        showListingPayment(container, parseInt(urlListingId));
+      } else {
+        // Show payment dashboard / history
+        showPaymentDashboard(container);
+      }
+    }
+
+    // ============ LISTING PAYMENT PAGE ============
+    function showListingPayment(container, listingId) {
+      const listing = getListing(listingId);
+      if (!listing) {
+        container.innerHTML = '<div class="text-center py-5"><h4 class="text-muted">Listing not found</h4></div>';
+        return;
+      }
+
+      const uni = getUniversity(listing.universityId);
+      const alreadyPaid = hasPaidForListing(user.id, listingId);
+
+      if (alreadyPaid) {
+        // Already paid - show success
+        container.innerHTML = `
+          <div class="row justify-content-center">
+            <div class="col-lg-6">
+              <div class="payment-card text-center">
+                <div class="success-animation">
+                  <i class="fas fa-check-circle check-icon"></i>
+                  <h4 class="fw-bold mt-3">Access Already Unlocked!</h4>
+                  <p class="text-muted">You have already paid for this listing. You can contact the landlord directly.</p>
+                  <a href="listing-detail.html?id=${listingId}" class="btn btn-primary mt-3">
+                    <i class="fas fa-arrow-left"></i> Back to Listing
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // Check if user is landlord or admin (free access)
+      if (listing.landlordId === user.id || user.role === 'admin') {
+        container.innerHTML = `
+          <div class="row justify-content-center">
+            <div class="col-lg-6">
+              <div class="payment-card text-center">
+                <i class="fas fa-shield-alt" style="font-size: 4rem; color: var(--primary-light);"></i>
+                <h4 class="fw-bold mt-3">Free Access (Owner/Admin)</h4>
+                <p class="text-muted">You own this listing or are an admin. No payment needed.</p>
+                <a href="listing-detail.html?id=${listingId}" class="btn btn-primary">
+                  <i class="fas fa-arrow-left"></i> View Listing
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="row g-4">
+              <!-- Payment Form -->
+              <div class="col-lg-7">
+                <div class="payment-card" id="paymentFormCard">
+                  <h4 class="fw-bold mb-1"><i class="fas fa-lock text-warning"></i> Unlock Contact Info</h4>
+                  <p class="text-muted mb-3">Pay KSh ${PAYMENT_AMOUNT} to contact the landlord about:</p>
+
+                  <div class="d-flex align-items-center gap-3 p-3 bg-light rounded mb-4">
+                    <img src="${listing.images[0]}" alt="${listing.title}" onerror="this.src='https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=100&h=80&fit=crop'" style="width:80px;height:60px;object-fit:cover;border-radius:4px;">
+                    <div>
+                      <h6 class="fw-bold mb-0">${listing.title}</h6>
+                      <small class="text-muted">${formatPrice(listing.price)}/month ${uni ? '- ' + uni.name : ''}</small>
+                    </div>
+                  </div>
+
+                  <!-- M-Pesa Payment -->
+                  <div class="text-center mb-4">
+                    <div class="mpesa-logo mb-2">
+                      <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h5 class="fw-bold">M-Pesa Payment</h5>
+                    <div class="amount-display">KSh ${PAYMENT_AMOUNT}</div>
+                  </div>
+
+                  <!-- Steps -->
+                  <div class="payment-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                      <h6>Go to M-Pesa on your phone</h6>
+                      <p>Dial *334# or open the M-Pesa app</p>
+                    </div>
+                  </div>
+                  <div class="payment-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                      <h6>Select "Lipa na M-Pesa"</h6>
+                      <p>Then choose "Buy Goods and Services"</p>
+                    </div>
+                  </div>
+                  <div class="payment-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                      <h6>Enter Business Number</h6>
+                      <p><strong>247247</strong> (UniHouse Kenya)</p>
+                    </div>
+                  </div>
+                  <div class="payment-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                      <h6>Enter Amount</h6>
+                      <p><strong>KSh ${PAYMENT_AMOUNT}</strong></p>
+                    </div>
+                  </div>
+                  <div class="payment-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                      <h6>Enter your PIN and Confirm</h6>
+                      <p>You'll receive an M-Pesa confirmation message</p>
+                    </div>
+                  </div>
+
+                  <hr>
+                  <h6 class="fw-bold">Confirm Payment</h6>
+                  <form onsubmit="handlePaymentConfirm(event, ${listingId})">
+                    <div class="mb-3">
+                      <label class="form-label">M-Pesa Phone Number</label>
+                      <div class="phone-input-group">
+                        <span class="prefix">+254</span>
+                        <input type="tel" class="form-control" id="payPhone" placeholder="712345678" required pattern="[17]\d{8}" title="Enter a valid Kenyan phone number (e.g. 712345678)">
+                      </div>
+                      <small class="text-muted">Enter the M-Pesa registered number you paid from</small>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">M-Pesa Transaction Code</label>
+                      <input type="text" class="form-control" id="payTransactionCode" placeholder="e.g. PBC1234X5" required>
+                      <small class="text-muted">Enter the M-Pesa confirmation code from your SMS</small>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-lg w-100" id="payBtn">
+                      <i class="fas fa-check-circle"></i> Confirm Payment (KSh ${PAYMENT_AMOUNT})
+                    </button>
+                  </form>
+                </div>
+
+                <!-- Success Card -->
+                <div class="payment-card" id="paymentSuccessCard" style="display:none;">
+                  <div class="success-animation">
+                    <i class="fas fa-check-circle check-icon"></i>
+                    <h4 class="fw-bold mt-3">Payment Successful!</h4>
+                    <div class="transaction-code mt-3" id="paidTransactionCode">UHS-XXXX-XXXX</div>
+                    <p class="text-muted mt-2">Transaction Code</p>
+                    <p class="mt-3">You can now contact the landlord directly.</p>
+                    <div class="d-flex gap-2 justify-content-center mt-3">
+                      <a href="listing-detail.html?id=${listingId}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> View Listing
+                      </a>
+                      <a href="payment.html" class="btn btn-outline-primary">
+                        <i class="fas fa-receipt"></i> My Payments
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sidebar -->
+              <div class="col-lg-5">
+                <div class="payment-card mb-3">
+                  <h5 class="fw-bold"><i class="fas fa-info-circle"></i> Why Pay?</h5>
+                  <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Contact landlord directly</li>
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Get landlord's phone number</li>
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Schedule a viewing appointment</li>
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> One-time payment per listing</li>
+                    <li><i class="fas fa-check text-success"></i> 100% refund if listing is unavailable</li>
+                  </ul>
+                </div>
+
+                <div class="payment-card mb-3">
+                  <h5 class="fw-bold"><i class="fas fa-shield-alt"></i> Secure Payment</h5>
+                  <p class="text-muted small">Payments are processed via M-Pesa, Kenya's trusted mobile money platform. Your transaction is encrypted and secure.</p>
+                </div>
+
+                <div class="payment-card">
+                  <h5 class="fw-bold"><i class="fas fa-clock"></i> Recent Payments</h5>
+                  <div id="recentPaymentsSidebar">
+                    <p class="text-muted small">Loading...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Load recent payments for this user
+      loadRecentPaymentsSidebar();
+    }
+
+    // Handle payment confirmation
+    function handlePaymentConfirm(e, listingId) {
+      e.preventDefault();
+
+      const phone = document.getElementById('payPhone').value.trim();
+      const transactionCode = document.getElementById('payTransactionCode').value.trim();
+
+      if (!phone || !transactionCode) {
+        showToast('Please fill in all fields', 'error');
+        return;
+      }
+
+      // Validate phone (Kenyan format)
+      if (!/^[17]\d{8}$/.test(phone)) {
+        showToast('Please enter a valid Kenyan phone number (e.g. 712345678)', 'error');
+        return;
+      }
+
+      // Show loading
+      const btn = document.getElementById('payBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+      // Simulate M-Pesa processing delay
+      setTimeout(() => {
+        const result = initiateAndCompletePayment(user.id, listingId, phone);
+
+        if (result.success) {
+          // Show success
+          document.getElementById('paymentFormCard').style.display = 'none';
+          document.getElementById('paymentSuccessCard').style.display = 'block';
+          document.getElementById('paidTransactionCode').textContent = result.transactionCode;
+          
+          showToast('Payment successful! You can now contact the landlord.', 'success');
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment (KSh 250)';
+          showToast(result.message || 'Payment failed. Please try again.', 'error');
+        }
+      }, 2000);
+    }
+
+    // Recent payments sidebar
+    function loadRecentPaymentsSidebar() {
+      const container = document.getElementById('recentPaymentsSidebar');
+      if (!container) return;
+
+      const payments = getPaymentsForUser(user.id).slice(0, 5);
+
+      if (payments.length === 0) {
+        container.innerHTML = '<p class="text-muted small mb-0">No payments yet.</p>';
+        return;
+      }
+
+      container.innerHTML = payments.map(p => {
+        const listing = getListing(p.listingId);
+        const statusClass = p.status === 'completed' ? 'status-completed' : 
+                           p.status === 'pending' ? 'status-pending' : 
+                           p.status === 'failed' ? 'status-failed' : 'status-refunded';
+        return `
+          <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+            <div>
+              <small class="fw-bold d-block">${listing ? listing.title : 'Unknown Listing'}</small>
+              <small class="text-muted">${p.date} ${p.time || ''}</small>
+            </div>
+            <div class="text-end">
+              <span class="status-badge-payment ${statusClass}">${p.status}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============ PAYMENT DASHBOARD ============
+    function showPaymentDashboard(container) {
+      const payments = getPaymentsForUser(user.id);
+      const stats = getPaymentStats();
+      const paidListings = getUserPaidListings(user.id);
+
+      let roleSpecificSection = '';
+
+      // Landlord: Show payments received for their listings
+      if (user.role === 'landlord') {
+        const landlordPayments = getPaymentsForLandlord(user.id);
+        const completedPayments = landlordPayments.filter(p => p.status === 'completed');
+        const revenue = completedPayments.reduce((sum, p) => sum + p.amount, 0);
+
+        roleSpecificSection = `
+          <div class="card mb-4">
+            <div class="card-body">
+              <h5 class="fw-bold"><i class="fas fa-chart-line text-success"></i> My Earnings</h5>
+              <div class="row g-3 mt-2">
+                <div class="col-6">
+                  <div class="text-center p-3 bg-light rounded">
+                    <div class="fw-bold" style="font-size: 1.5rem; color: var(--secondary);">${formatPrice(revenue)}</div>
+                    <small class="text-muted">Total Revenue</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="text-center p-3 bg-light rounded">
+                    <div class="fw-bold" style="font-size: 1.5rem; color: var(--primary-light);">${completedPayments.length}</div>
+                    <small class="text-muted">Student Payments</small>
+                  </div>
+                </div>
+              </div>
+              <hr>
+              <h6>Recent Payments Received</h6>
+              ${completedPayments.length === 0 ? '<p class="text-muted small">No payments received yet.</p>' : 
+                completedPayments.slice(0, 5).map(p => {
+                  const listing = getListing(p.listingId);
+                  const users = getUsers();
+                  const payer = users.find(u => u.id === p.userId);
+                  return `
+                    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                      <div>
+                        <small class="fw-bold d-block">${listing ? listing.title : 'Unknown'}</small>
+                        <small class="text-muted">${payer ? payer.name : 'Unknown'} - ${p.date}</small>
+                      </div>
+                      <small class="fw-bold text-success">${formatPrice(p.amount)}</small>
+                    </div>
+                  `;
+                }).join('')
+              }
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <h2 class="fw-bold mb-4"><i class="fas fa-credit-card"></i> Payments & Tracking</h2>
+        <p class="text-muted">Manage your payments, view transaction history, and track your spending.</p>
+
+        <div class="dashboard-stats mb-4">
+          <div class="stat-card blue">
+            <i class="fas fa-receipt"></i>
+            <div class="number">${payments.length}</div>
+            <div class="label">Total Transactions</div>
+          </div>
+          <div class="stat-card green">
+            <i class="fas fa-check-circle"></i>
+            <div class="number">${payments.filter(p => p.status === 'completed').length}</div>
+            <div class="label">Successful</div>
+          </div>
+          <div class="stat-card orange">
+            <i class="fas fa-home"></i>
+            <div class="number">${paidListings.length}</div>
+            <div class="label">Listings Unlocked</div>
+          </div>
+          <div class="stat-card red">
+            <i class="fas fa-coins"></i>
+            <div class="number">${formatPrice(payments.filter(p => p.status === 'completed').reduce((s, p) => s + p.amount, 0))}</div>
+            <div class="label">Total Spent</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-8">
+            <!-- Payment History -->
+            <div class="card mb-4">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-history"></i> Payment History</h5>
+                <span class="badge bg-primary">${payments.length} total</span>
+              </div>
+              <div class="card-body">
+                ${payments.length === 0 ? `
+                  <div class="text-center py-4">
+                    <i class="fas fa-receipt" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-2">No payments yet. Browse houses to find your next accommodation.</p>
+                    <a href="listings.html" class="btn btn-primary">Browse Houses</a>
+                  </div>
+                ` : `
+                  <div class="table-responsive">
+                    <table class="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Transaction Code</th>
+                          <th>Property</th>
+                          <th>Amount</th>
+                          <th>Status</th>
+                          <th>Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${payments.map(p => {
+                          const listing = getListing(p.listingId);
+                          const statusClass = p.status === 'completed' ? 'status-completed' : 
+                                             p.status === 'pending' ? 'status-pending' : 
+                                             p.status === 'failed' ? 'status-failed' : 'status-refunded';
+                          return `
+                            <tr>
+                              <td><small>${p.date}<br>${p.time || ''}</small></td>
+                              <td><small class="transaction-code" style="font-size:0.8rem;">${p.transactionCode}</small></td>
+                              <td><small>${listing ? listing.title : 'Deleted'}</small></td>
+                              <td><strong>${formatPrice(p.amount)}</strong></td>
+                              <td><span class="status-badge-payment ${statusClass}">${p.status}</span></td>
+                              <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="showReceipt(${p.id})">
+                                  <i class="fas fa-receipt"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          `;
+                        }).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            ${roleSpecificSection}
+
+            <!-- Unlocked Listings -->
+            <div class="card mb-4">
+              <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-unlock text-success"></i> Unlocked Listings</h5>
+              </div>
+              <div class="card-body">
+                ${paidListings.length === 0 ? '<p class="text-muted small">No listings unlocked yet.</p>' : 
+                  paidListings.map(t => {
+                    const listing = getListing(t.listingId);
+                    return `
+                      <a href="listing-detail.html?id=${t.listingId}" class="text-decoration-none">
+                        <div class="d-flex align-items-center gap-2 mb-2 p-2 bg-light rounded">
+                          <i class="fas fa-check-circle text-success"></i>
+                          <div>
+                            <small class="fw-bold d-block">${listing ? listing.title : 'Unknown'}</small>
+                            <small class="text-muted">Unlocked: ${t.date}</small>
+                          </div>
+                        </div>
+                      </a>
+                    `;
+                  }).join('')
+                }
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+              <div class="card-body">
+                <h5 class="fw-bold"><i class="fas fa-bolt text-warning"></i> Quick Actions</h5>
+                <div class="d-grid gap-2">
+                  <a href="listings.html" class="btn btn-outline-primary"><i class="fas fa-search"></i> Browse Houses</a>
+                  <a href="payment.html" class="btn btn-outline-success"><i class="fas fa-redo"></i> Refresh Payments</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ============ RECEIPT MODAL ============
+    function showReceipt(paymentId) {
+      const payment = getPayments().find(p => p.id === paymentId);
+      if (!payment) {
+        showToast('Payment not found', 'error');
+        return;
+      }
+
+      const listing = getListing(payment.listingId);
+      const users = getUsers();
+      const payer = users.find(u => u.id === payment.userId);
+
+      // Create modal
+      const modalHtml = `
+        <div class="modal fade" id="receiptModal" tabindex="-1">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+              <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-receipt"></i> Payment Receipt</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="text-center mb-3">
+                  <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                  <h5 class="fw-bold mt-2">Payment Successful</h5>
+                </div>
+                <table class="table table-sm">
+                  <tr><td>Transaction Code</td><td class="fw-bold">${payment.transactionCode}</td></tr>
+                  <tr><td>Date</td><td>${payment.date} ${payment.time || ''}</td></tr>
+                  <tr><td>Amount</td><td class="fw-bold text-success">${formatPrice(payment.amount)}</td></tr>
+                  <tr><td>Payment Method</td><td>${payment.paymentMethod}</td></tr>
+                  <tr><td>Phone</td><td>+254 ${payment.phone}</td></tr>
+                  <tr><td>Status</td><td><span class="status-badge-payment status-completed">Completed</span></td></tr>
+                  <tr><td>Property</td><td>${listing ? listing.title : 'N/A'}</td></tr>
+                  <tr><td>Payer</td><td>${payer ? payer.name : 'N/A'}</td></tr>
+                </table>
+                <p class="text-muted small text-center mb-0">UniHouse Kenya - University House Hunting System</p>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Remove existing modal if any
+      const existing = document.getElementById('receiptModal');
+      if (existing) existing.remove();
+
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+      modal.show();
+
+      // Clean up on close
+      document.getElementById('receiptModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+      });
+    }
+
+    // Initialize
+    loadPaymentPage();
+  </script>
+</body>
+</html>

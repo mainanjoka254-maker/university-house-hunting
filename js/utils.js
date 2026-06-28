@@ -155,6 +155,7 @@ function renderNavigation() {
         <li class="nav-item"><a class="nav-link" href="listings.html"><i class="fas fa-search"></i>Browse</a></li>
         <li class="nav-item"><a class="nav-link" href="dashboard.html"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="listings.html?bookmarks=true"><i class="fas fa-heart"></i>Saved</a></li>
+        <li class="nav-item"><a class="nav-link" href="payment.html"><i class="fas fa-credit-card"></i>Payments</a></li>
         <li class="nav-item"><a class="nav-link" href="contact.html"><i class="fas fa-headset"></i>Contact</a></li>
       `;
     } else if (user.role === 'landlord') {
@@ -162,12 +163,14 @@ function renderNavigation() {
         <li class="nav-item"><a class="nav-link" href="dashboard.html"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="post-listing.html"><i class="fas fa-plus-circle"></i>Post House</a></li>
         <li class="nav-item"><a class="nav-link" href="listings.html?my=true"><i class="fas fa-list"></i>My Listings</a></li>
+        <li class="nav-item"><a class="nav-link" href="payment.html"><i class="fas fa-credit-card"></i>Payments</a></li>
         <li class="nav-item"><a class="nav-link" href="contact.html"><i class="fas fa-headset"></i>Contact</a></li>
       `;
     } else if (user.role === 'admin') {
       navLinks = `
         <li class="nav-item"><a class="nav-link" href="admin.html"><i class="fas fa-cog"></i>Admin Panel</a></li>
         <li class="nav-item"><a class="nav-link" href="listings.html"><i class="fas fa-search"></i>Browse</a></li>
+        <li class="nav-item"><a class="nav-link" href="payment.html"><i class="fas fa-credit-card"></i>Payments</a></li>
         <li class="nav-item"><a class="nav-link" href="contact.html"><i class="fas fa-headset"></i>Contact</a></li>
       `;
     }
