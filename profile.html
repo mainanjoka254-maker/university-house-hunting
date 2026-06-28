@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - UniHouse Kenya</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+  <div id="main-navigation"></div>
+
+  <div class="profile-header">
+    <div class="container">
+      <div id="profileAvatarDisplay" class="profile-avatar-placeholder">
+        <i class="fas fa-user"></i>
+      </div>
+      <h3 id="profileNameDisplay">User Name</h3>
+      <p id="profileRoleDisplay" class="mb-0">Role</p>
+    </div>
+  </div>
+
+  <div class="container py-4">
+    <div class="row g-4">
+      <!-- Profile Settings -->
+      <div class="col-lg-8">
+        <div class="profile-section">
+          <h4 class="fw-bold mb-4"><i class="fas fa-user-cog"></i> Account Settings</h4>
+          
+          <form id="profileForm" onsubmit="handleProfileUpdate(event)">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-control" id="profName" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="profEmail" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone Number</label>
+                <input type="tel" class="form-control" id="profPhone">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Member Since</label>
+                <input type="text" class="form-control" id="profJoined" disabled>
+              </div>
+              <div class="col-12">
+                <hr>
+                <h5 class="fw-bold"><i class="fas fa-lock"></i> Change Password</h5>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Current Password</label>
+                <input type="password" class="form-control" id="profCurrentPwd" placeholder="Leave blank to keep">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">New Password</label>
+                <input type="password" class="form-control" id="profNewPwd" placeholder="Min 6 characters">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Confirm Password</label>
+                <input type="password" class="form-control" id="profConfirmPwd" placeholder="Confirm new password">
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="profile-section mt-4">
+          <h4 class="fw-bold mb-3"><i class="fas fa-history"></i> Recent Activity</h4>
+          <div id="activityLog">
+            <p class="text-muted">Loading...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Account Info -->
+        <div class="profile-section mb-4">
+          <h5 class="fw-bold"><i class="fas fa-id-card"></i> Account Info</h5>
+          <div id="accountInfo">
+            <p class="text-muted">Loading...</p>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="profile-section mb-4">
+          <h5 class="fw-bold"><i class="fas fa-bolt text-warning"></i> Quick Actions</h5>
+          <div class="d-grid gap-2">
+            <a href="dashboard.html" class="btn btn-outline-primary"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="listings.html" class="btn btn-outline-success"><i class="fas fa-search"></i> Browse Houses</a>
+            <a href="payment.html" class="btn btn-outline-info"><i class="fas fa-credit-card"></i> My Payments</a>
+            <button class="btn btn-outline-secondary" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+          </div>
+        </div>
+
+        <!-- Dark Mode Toggle -->
+        <div class="profile-section">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="fw-bold mb-0"><i class="fas fa-moon"></i> Dark Mode</h5>
+              <small class="text-muted">Toggle dark theme</small>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="darkModeSwitch" onchange="handleDarkModeToggle()" style="width:3rem;height:1.5rem;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="main-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    initDB();
+    
+    const user = getCurrentUser();
+    if (!user) { window.location.href = 'auth.html'; }
+
+    renderNavigation();
+    renderFooter();
+    initDarkMode();
+
+    // Load profile
+    function loadProfile() {
+      document.getElementById('profileNameDisplay').textContent = user.name;
+      document.getElementById('profileRoleDisplay').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1) + (user.verified ? ' ✓ Verified' : '');
+      
+      document.getElementById('profName').value = user.name || '';
+      document.getElementById('profEmail').value = user.email || '';
+      document.getElementById('profPhone').value = user.phone || '';
+      document.getElementById('profJoined').value = user.createdAt || 'N/A';
+
+      // Dark mode switch
+      document.getElementById('darkModeSwitch').checked = user.darkMode || false;
+
+      // Account info
+      document.getElementById('accountInfo').innerHTML = `
+        <div class="mb-2"><small class="text-muted">Role</small><br><strong>${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</strong></div>
+        <div class="mb-2"><small class="text-muted">Email</small><br><strong>${user.email}</strong></div>
+        <div class="mb-2"><small class="text-muted">Phone</small><br><strong>${user.phone || 'Not set'}</strong></div>
+        <div class="mb-2"><small class="text-muted">Joined</small><br><strong>${user.createdAt || 'N/A'}</strong></div>
+        <div><small class="text-muted">Status</small><br>${user.verified ? '<span class="badge bg-success">Verified</span>' : '<span class="badge bg-secondary">Not Verified</span>'}</div>
+      `;
+
+      // Activity log
+      loadActivityLog();
+    }
+
+    function loadActivityLog() {
+      const container = document.getElementById('activityLog');
+      const payments = getPaymentsForUser(user.id);
+      const messages = getMessagesForUser(user.id);
+      const bookmarks = getUserBookmarks(user.id);
+      
+      let activities = [];
+
+      payments.forEach(p => {
+        const listing = getListing(p.listingId);
+        activities.push({
+          date: p.date,
+          icon: 'fa-credit-card text-success',
+          text: `Payment of ${formatPrice(p.amount)} for "${listing ? listing.title : 'Unknown'}" - ${p.status}`
+        });
+      });
+
+      messages.forEach(m => {
+        activities.push({
+          date: m.date,
+          icon: 'fa-envelope text-primary',
+          text: `Inquiry sent regarding "${m.listingTitle}"`
+        });
+      });
+
+      bookmarks.forEach(b => {
+        activities.push({
+          date: b.createdAt || b.date,
+          icon: 'fa-heart text-danger',
+          text: `Saved "${b.title}" to bookmarks`
+        });
+      });
+
+      activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (activities.length === 0) {
+        container.innerHTML = '<p class="text-muted">No activity yet. Start by browsing houses!</p>';
+        return;
+      }
+
+      container.innerHTML = activities.slice(0, 10).map(a => `
+        <div class="d-flex align-items-center gap-3 mb-3 pb-2 border-bottom">
+          <i class="fas ${a.icon}" style="font-size:1.2rem;width:25px;"></i>
+          <div class="flex-grow-1">
+            <small>${a.text}</small>
+            <br><small class="text-muted">${a.date}</small>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function handleProfileUpdate(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('profName').value.trim();
+      const email = document.getElementById('profEmail').value.trim();
+      const phone = document.getElementById('profPhone').value.trim();
+      const currentPwd = document.getElementById('profCurrentPwd').value;
+      const newPwd = document.getElementById('profNewPwd').value;
+      const confirmPwd = document.getElementById('profConfirmPwd').value;
+
+      if (!name || !email) {
+        showToast('Name and email are required', 'error');
+        return;
+      }
+
+      // Handle password change
+      if (newPwd || confirmPwd || currentPwd) {
+        if (currentPwd !== user.password) {
+          showToast('Current password is incorrect', 'error');
+          return;
+        }
+        if (newPwd.length < 6) {
+          showToast('New password must be at least 6 characters', 'error');
+          return;
+        }
+        if (newPwd !== confirmPwd) {
+          showToast('Passwords do not match', 'error');
+          return;
+        }
+        user.password = newPwd;
+      }
+
+      user.name = name;
+      user.email = email;
+      user.phone = phone;
+
+      const result = updateUser(user);
+      if (result.success) {
+        showToast('Profile updated successfully!', 'success');
+        document.getElementById('profCurrentPwd').value = '';
+        document.getElementById('profNewPwd').value = '';
+        document.getElementById('profConfirmPwd').value = '';
+        loadProfile();
+      } else {
+        showToast(result.message, 'error');
+      }
+    }
+
+    function handleDarkModeToggle() {
+      toggleDarkMode();
+      showToast('Theme updated', 'info');
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

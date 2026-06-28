@@ -290,6 +290,7 @@ function initDB() {
     localStorage.setItem('uhs_users', JSON.stringify([]));
     localStorage.setItem('uhs_messages', JSON.stringify([]));
     localStorage.setItem('uhs_bookmarks', JSON.stringify([]));
+    localStorage.setItem('uhs_notifications', JSON.stringify([]));
     localStorage.setItem('uhs_initialized', 'true');
     console.log('Database initialized with sample data');
   }
@@ -320,12 +321,14 @@ function saveUsers(users) {
 
 function registerUser(user) {
   const users = getUsers();
-  // Check if email already exists
   if (users.find(u => u.email === user.email)) {
     return { success: false, message: 'Email already registered' };
   }
   user.id = generateId();
   user.createdAt = new Date().toISOString().split('T')[0];
+  user.avatar = '';
+  user.verified = false;
+  user.darkMode = false;
   users.push(user);
   saveUsers(users);
   return { success: true, user };
@@ -562,7 +565,12 @@ function searchListings(filters) {
     listings = listings.filter(l => l.status === filters.status);
   }
   
-  // Sort
+  if (filters.verified) {
+    const users = getUsers();
+    const verifiedLandlordIds = users.filter(u => u.verified).map(u => u.id);
+    listings = listings.filter(l => verifiedLandlordIds.includes(l.landlordId));
+  }
+  
   if (filters.sort) {
     switch (filters.sort) {
       case 'price_asc':
@@ -605,6 +613,138 @@ function addContactMessage(contactMsg) {
   return { success: true, message: contactMsg };
 }
 
+// ============ NOTIFICATIONS ============
+function getNotifications() {
+  return JSON.parse(localStorage.getItem('uhs_notifications')) || [];
+}
+
+function saveNotifications(notifications) {
+  localStorage.setItem('uhs_notifications', JSON.stringify(notifications));
+}
+
+function addNotification(notification) {
+  const notifications = getNotifications();
+  notification.id = generateId();
+  notification.date = new Date().toISOString().split('T')[0];
+  notification.time = new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+  notification.read = false;
+  notifications.unshift(notification);
+  saveNotifications(notifications);
+  return { success: true, notification };
+}
+
+function getNotificationsForUser(userId) {
+  return getNotifications().filter(n => n.userId === userId || n.userId === 'all');
+}
+
+function getUnreadNotificationCount(userId) {
+  return getNotificationsForUser(userId).filter(n => !n.read).length;
+}
+
+function markNotificationRead(notificationId) {
+  const notifications = getNotifications();
+  const n = notifications.find(n => n.id === notificationId);
+  if (n) { n.read = true; saveNotifications(notifications); }
+}
+
+function markAllNotificationsRead(userId) {
+  const notifications = getNotifications();
+  notifications.forEach(n => {
+    if ((n.userId === userId || n.userId === 'all') && !n.read) n.read = true;
+  });
+  saveNotifications(notifications);
+}
+
+// ============ LANDLORD VERIFICATION ============
+function verifyLandlord(userId) {
+  const users = getUsers();
+  const user = users.find(u => u.id === userId);
+  if (user && user.role === 'landlord') {
+    user.verified = true;
+    saveUsers(users);
+    const current = getCurrentUser();
+    if (current && current.id === userId) setCurrentUser(user);
+    return { success: true };
+  }
+  return { success: false, message: 'User not found or not a landlord' };
+}
+
+function unverifyLandlord(userId) {
+  const users = getUsers();
+  const user = users.find(u => u.id === userId);
+  if (user) {
+    user.verified = false;
+    saveUsers(users);
+    const current = getCurrentUser();
+    if (current && current.id === userId) setCurrentUser(user);
+    return { success: true };
+  }
+  return { success: false, message: 'User not found' };
+}
+
+function isLandlordVerified(landlordId) {
+  const users = getUsers();
+  const user = users.find(u => u.id === landlordId);
+  return user ? user.verified : false;
+}
+
+// ============ COMPARISON ============
+function getComparisonList() {
+  return JSON.parse(localStorage.getItem('uhs_comparison')) || [];
+}
+
+function saveComparisonList(list) {
+  localStorage.setItem('uhs_comparison', JSON.stringify(list));
+}
+
+function addToComparison(listingId) {
+  let list = getComparisonList();
+  if (list.length >= 3) return { success: false, message: 'Maximum 3 listings to compare' };
+  if (list.includes(listingId)) return { success: false, message: 'Already in comparison' };
+  list.push(listingId);
+  saveComparisonList(list);
+  return { success: true, list };
+}
+
+function removeFromComparison(listingId) {
+  let list = getComparisonList();
+  list = list.filter(id => id !== listingId);
+  saveComparisonList(list);
+  return { success: true, list };
+}
+
+function clearComparison() {
+  saveComparisonList([]);
+}
+
+// ============ DARK MODE ============
+function toggleDarkMode() {
+  const user = getCurrentUser();
+  if (!user) return;
+  user.darkMode = !user.darkMode;
+  updateUser(user);
+  applyDarkMode(user.darkMode);
+}
+
+function applyDarkMode(enabled) {
+  if (enabled) {
+    document.body.classList.add('dark-mode');
+    localStorage.setItem('uhs_darkMode', 'true');
+  } else {
+    document.body.classList.remove('dark-mode');
+    localStorage.setItem('uhs_darkMode', 'false');
+  }
+}
+
+function initDarkMode() {
+  const user = getCurrentUser();
+  if (user && user.darkMode) {
+    applyDarkMode(true);
+  } else if (localStorage.getItem('uhs_darkMode') === 'true') {
+    applyDarkMode(true);
+  }
+}
+
 // ============ STATISTICS ============
 function getSystemStats() {
   const users = getUsers();
@@ -617,6 +757,7 @@ function getSystemStats() {
     totalUsers: users.length,
     totalStudents: users.filter(u => u.role === 'student').length,
     totalLandlords: users.filter(u => u.role === 'landlord').length,
+    verifiedLandlords: users.filter(u => u.role === 'landlord' && u.verified).length,
     totalListings: listings.length,
     availableListings: listings.filter(l => l.status === 'available').length,
     rentedListings: listings.filter(l => l.status === 'rented').length,
