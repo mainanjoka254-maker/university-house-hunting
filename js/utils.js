@@ -139,6 +139,130 @@ function filterByDistance(listings, universityLat, universityLng, maxDistance) {
   });
 }
 
+// ============ GET DISTANCE FROM UNIVERSITY ============
+function getDistanceFromUniversity(listing) {
+  if (!listing.lat || !listing.lng) return null;
+  const uni = getUniversity(listing.universityId);
+  if (!uni) return null;
+  const dist = calculateDistance(uni.lat, uni.lng, listing.lat, listing.lng);
+  return Math.round(dist * 10) / 10;
+}
+
+// ============ RENDER DISTANCE BADGE ============
+function renderDistanceBadge(listing) {
+  const dist = getDistanceFromUniversity(listing);
+  if (dist === null) return '';
+  const color = dist <= 0.5 ? 'success' : dist <= 1 ? 'primary' : dist <= 2 ? 'warning' : 'secondary';
+  return `<span class="distance-badge"><i class="fas fa-walking"></i> ${dist} km from campus</span>`;
+}
+
+// ============ RENDER VERIFIED BADGE ============
+function renderVerifiedBadge(landlordId) {
+  if (isLandlordVerified(landlordId)) {
+    return `<i class="fas fa-check-circle verified-badge-sm" title="Verified Landlord"></i>`;
+  }
+  return '';
+}
+
+// ============ RENDER COMPARE BUTTON ============
+function renderCompareButton(listingId) {
+  const compareList = getComparisonList();
+  const inCompare = compareList.includes(listingId);
+  return `
+    <button class="btn btn-sm ${inCompare ? 'btn-info' : 'btn-outline-info'}" 
+            onclick="event.stopPropagation(); toggleCompare(${listingId})" 
+            title="${inCompare ? 'Remove from compare' : 'Add to compare'}">
+      <i class="fas fa-balance-scale"></i>
+    </button>
+  `;
+}
+
+// ============ TOGGLE COMPARE ============
+function toggleCompare(listingId) {
+  const compareList = getComparisonList();
+  if (compareList.includes(listingId)) {
+    removeFromComparison(listingId);
+    showToast('Removed from comparison', 'info');
+  } else {
+    const result = addToComparison(listingId);
+    if (result.success) {
+      showToast('Added to comparison (' + result.list.length + '/3)', 'success');
+    } else {
+      showToast(result.message, 'error');
+    }
+  }
+  // Re-render listing cards if on listings page
+  if (typeof applyFilters === 'function') applyFilters();
+}
+
+// ============ RENDER NOTIFICATION BELL ============
+function renderNotificationBell() {
+  const user = getCurrentUser();
+  if (!user) return '';
+  const unread = getUnreadNotificationCount(user.id);
+  return `
+    <li class="nav-item dropdown">
+      <a class="nav-link notification-bell" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-bell"></i>
+        ${unread > 0 ? `<span class="badge bg-danger badge-count">${unread}</span>` : ''}
+      </a>
+      <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notifDropdown">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+          <strong>Notifications</strong>
+          ${unread > 0 ? `<button class="btn btn-sm btn-link p-0" onclick="markAllRead()">Mark all read</button>` : ''}
+        </div>
+        <div id="notifList">
+          <div class="text-center py-3 text-muted small">Loading...</div>
+        </div>
+      </div>
+    </li>
+  `;
+}
+
+// ============ LOAD NOTIFICATIONS ============
+function loadNotifications() {
+  const notifList = document.getElementById('notifList');
+  if (!notifList) return;
+  const user = getCurrentUser();
+  if (!user) return;
+  const notifications = getNotificationsForUser(user.id);
+  if (notifications.length === 0) {
+    notifList.innerHTML = '<div class="text-center py-3 text-muted small">No notifications yet</div>';
+    return;
+  }
+  notifList.innerHTML = notifications.slice(0, 10).map(n => `
+    <div class="notification-item ${n.read ? '' : 'unread'}" onclick="openNotification(${n.id}, '${n.link || '#'}')">
+      <div class="d-flex align-items-center gap-2">
+        <div class="notif-icon bg-${n.color || 'primary'} text-white">
+          <i class="fas ${n.icon || 'fa-bell'}" style="font-size:0.8rem;"></i>
+        </div>
+        <div class="flex-grow-1">
+          <small class="d-block">${n.message}</small>
+          <small class="text-muted">${n.date} ${n.time || ''}</small>
+        </div>
+        ${n.read ? '' : '<span class="badge bg-primary" style="width:8px;height:8px;border-radius:50%;padding:0;"></span>'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function markAllRead() {
+  const user = getCurrentUser();
+  if (!user) return;
+  markAllNotificationsRead(user.id);
+  loadNotifications();
+  // Re-render nav to update badge count
+  renderNavigation();
+  showToast('All notifications marked as read', 'info');
+}
+
+function openNotification(id, link) {
+  markNotificationRead(id);
+  loadNotifications();
+  renderNavigation();
+  if (link && link !== '#') window.location.href = link;
+}
+
 // ============ RENDER NAVIGATION ============
 function renderNavigation() {
   const navContainer = document.getElementById('main-navigation');
@@ -186,16 +310,27 @@ function renderNavigation() {
             <ul class="navbar-nav me-auto">
               ${navLinks}
             </ul>
-            <ul class="navbar-nav">
-              <li class="nav-item">
-                <span class="nav-link user-badge"><i class="fas fa-user"></i> ${escapeHtml(user.name || user.email)}</span>
+            <ul class="navbar-nav align-items-center">
+              ${renderNotificationBell()}
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle user-badge" href="#" role="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-user"></i> ${escapeHtml(user.name || user.email)}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="profile.html"><i class="fas fa-id-card"></i> My Profile</a></li>
+                  <li><a class="dropdown-item" href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="#" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
               </li>
-              <li class="nav-item"><a class="nav-link" href="#" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i>Logout</a></li>
             </ul>
           </div>
         </div>
       </nav>
     `;
+    
+    // Load notifications after nav is rendered
+    setTimeout(loadNotifications, 100);
   } else {
     navContainer.innerHTML = `
       <nav class="navbar navbar-expand-lg navbar-dark sticky-top">

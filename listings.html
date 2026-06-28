@@ -131,6 +131,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/data.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/payment.js"></script>
   <script>
     initDB();
     renderNavigation();
@@ -216,16 +217,18 @@
                   <h6 class="card-title mb-0" style="cursor:pointer" onclick="window.location.href='listing-detail.html?id=${l.id}'">${l.title}</h6>
                   ${getStatusBadge(l.status)}
                 </div>
-                <p class="location mb-2"><i class="fas fa-map-marker-alt"></i> ${l.location}</p>
-                <p class="mb-2"><small class="text-muted"><i class="fas fa-university"></i> ${uni ? uni.name : 'Unknown'}</small></p>
+                <p class="location mb-1"><i class="fas fa-map-marker-alt"></i> ${l.location}</p>
+                <p class="mb-1"><small class="text-muted"><i class="fas fa-university"></i> ${uni ? uni.name : 'Unknown'} ${renderVerifiedBadge(l.landlordId)}</small></p>
+                <p class="mb-1">${renderDistanceBadge(l)}</p>
                 <p class="card-text flex-grow-1">${truncateText(l.description, 80)}</p>
                 <div class="mb-2">
                   ${l.amenities.map(a => `<span class="badge-amenity"><i class="fas ${getAmenityIcon(a)}"></i> ${a}</span>`).join('')}
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2">
                   <span class="price-tag">${formatPrice(l.price)} <span>/month</span></span>
-                  <div>
-                    <small class="text-muted me-2"><i class="fas fa-star text-warning"></i> ${avgRating || 'N/A'}</small>
+                  <div class="d-flex align-items-center gap-1">
+                    <small class="text-muted me-1"><i class="fas fa-star text-warning"></i> ${avgRating || 'N/A'}</small>
+                    ${user ? renderCompareButton(l.id) : ''}
                     ${user && user.role === 'student' ? `
                       <button class="btn btn-sm ${bookmarked ? 'btn-danger' : 'btn-outline-danger'}" onclick="event.stopPropagation(); handleBookmark(${l.id})">
                         <i class="fas fa-heart"></i>
