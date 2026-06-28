@@ -586,12 +586,32 @@ function searchListings(filters) {
   return listings;
 }
 
+// ============ CONTACT MESSAGES ============
+function getContactMessages() {
+  return JSON.parse(localStorage.getItem('uhs_contact_messages')) || [];
+}
+
+function saveContactMessages(contactMessages) {
+  localStorage.setItem('uhs_contact_messages', JSON.stringify(contactMessages));
+}
+
+function addContactMessage(contactMsg) {
+  const messages = getContactMessages();
+  contactMsg.id = generateId();
+  contactMsg.date = new Date().toISOString().split('T')[0];
+  contactMsg.read = false;
+  messages.push(contactMsg);
+  saveContactMessages(messages);
+  return { success: true, message: contactMsg };
+}
+
 // ============ STATISTICS ============
 function getSystemStats() {
   const users = getUsers();
   const listings = getListings();
   const reviews = getReviews();
   const messages = getMessages();
+  const contactMessages = getContactMessages();
   
   return {
     totalUsers: users.length,
@@ -603,6 +623,7 @@ function getSystemStats() {
     pendingListings: listings.filter(l => l.status === 'pending').length,
     totalReviews: reviews.length,
     totalMessages: messages.length,
+    totalContactMessages: contactMessages.length,
     totalViews: listings.reduce((acc, l) => acc + (l.views || 0), 0)
   };
 }

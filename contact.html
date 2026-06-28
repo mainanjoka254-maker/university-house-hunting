@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us - UniHouse Kenya</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .contact-section {
+      padding: 3rem 0;
+    }
+    .contact-info-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      height: 100%;
+      text-align: center;
+      transition: var(--transition);
+    }
+    .contact-info-card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-5px);
+    }
+    .contact-info-card .icon-circle {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 1.8rem;
+    }
+    .icon-circle.blue { background: #e3f2fd; color: var(--primary-light); }
+    .icon-circle.green { background: #e8f5e9; color: var(--secondary); }
+    .icon-circle.orange { background: #fff3e0; color: var(--warning); }
+    .icon-circle.red { background: #fce4ec; color: var(--accent); }
+    .contact-info-card h6 { font-weight: 600; margin-bottom: 0.5rem; }
+    .contact-info-card p { color: var(--gray); margin-bottom: 0; font-size: 0.9rem; }
+    
+    .contact-form-section {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2.5rem;
+    }
+    .contact-form-section h4 {
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+    .contact-form-section .subtitle {
+      color: var(--gray);
+      margin-bottom: 2rem;
+    }
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+      color: var(--primary-light);
+    }
+    .form-floating > .form-control:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.15);
+    }
+    
+    .faq-section {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+    }
+    .faq-section h5 {
+      font-weight: 600;
+      color: var(--dark);
+    }
+    .accordion-button:not(.collapsed) {
+      background: #e3f2fd;
+      color: var(--primary-light);
+      font-weight: 600;
+    }
+    .accordion-button:focus {
+      box-shadow: none;
+      border-color: var(--primary-light);
+    }
+    
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+    .success-message .check-icon {
+      font-size: 4rem;
+      color: var(--secondary);
+      margin-bottom: 1rem;
+    }
+    .success-message h4 {
+      font-weight: 700;
+      color: var(--dark);
+    }
+    .success-message p {
+      color: var(--gray);
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .contact-map-placeholder {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: var(--radius);
+      padding: 3rem;
+      text-align: center;
+      color: var(--white);
+    }
+    .contact-map-placeholder i {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+    .contact-map-placeholder h5 {
+      font-weight: 600;
+    }
+    .contact-map-placeholder p {
+      opacity: 0.9;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+  <div id="main-navigation"></div>
+
+  <!-- Page Header -->
+  <section class="hero-section" style="padding: 2.5rem 0;">
+    <div class="container">
+      <h1><i class="fas fa-headset"></i> Get In Touch</h1>
+      <p>Have a question, feedback, or need help? We'd love to hear from you. Reach out to the UniHouse Kenya team.</p>
+    </div>
+  </section>
+
+  <!-- Contact Info Cards -->
+  <section class="contact-section">
+    <div class="container">
+      <div class="row g-4 mb-5">
+        <div class="col-md-3">
+          <div class="contact-info-card">
+            <div class="icon-circle blue">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <h6>Visit Us</h6>
+            <p>Chuka Town, Tharaka Nithi County<br>Kenya</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="contact-info-card">
+            <div class="icon-circle green">
+              <i class="fas fa-phone-alt"></i>
+            </div>
+            <h6>Call Us</h6>
+            <p>+254 700 123 456<br>+254 712 345 678</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="contact-info-card">
+            <div class="icon-circle orange">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <h6>Email Us</h6>
+            <p>info@unihouse.co.ke<br>support@unihouse.co.ke</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="contact-info-card">
+            <div class="icon-circle red">
+              <i class="fas fa-clock"></i>
+            </div>
+            <h6>Working Hours</h6>
+            <p>Mon - Fri: 8:00 AM - 6:00 PM<br>Sat: 9:00 AM - 2:00 PM</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-5">
+        <!-- Contact Form -->
+        <div class="col-lg-7">
+          <div class="contact-form-section">
+            <h4><i class="fas fa-paper-plane text-primary"></i> Send Us a Message</h4>
+            <p class="subtitle">Fill out the form below and we'll get back to you as soon as possible.</p>
+
+            <!-- Form -->
+            <form id="contactForm" onsubmit="handleContactSubmit(event)">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <input type="text" class="form-control" id="contactName" placeholder="Your Name" required>
+                    <label for="contactName"><i class="fas fa-user text-muted"></i> Full Name</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <input type="email" class="form-control" id="contactEmail" placeholder="Your Email" required>
+                    <label for="contactEmail"><i class="fas fa-envelope text-muted"></i> Email Address</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <input type="tel" class="form-control" id="contactPhone" placeholder="Your Phone">
+                    <label for="contactPhone"><i class="fas fa-phone text-muted"></i> Phone Number</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <select class="form-select" id="contactSubject" required title="Select subject">
+                      <option value="">Choose a subject...</option>
+                      <option value="General Inquiry">General Inquiry</option>
+                      <option value="Landlord Registration">Landlord Registration</option>
+                      <option value="Student Support">Student Support</option>
+                      <option value="Technical Issue">Technical Issue</option>
+                      <option value="Listing Problem">Listing Problem</option>
+                      <option value="Feedback / Suggestion">Feedback / Suggestion</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <label for="contactSubject"><i class="fas fa-tag text-muted"></i> Subject</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-floating">
+                    <textarea class="form-control" id="contactMessage" rows="5" placeholder="Your Message" style="min-height: 140px;" required></textarea>
+                    <label for="contactMessage"><i class="fas fa-comment text-muted"></i> Your Message</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="contactCopy">
+                    <label class="form-check-label" for="contactCopy">
+                      Send me a copy of this message
+                    </label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary btn-lg w-100" id="contactSubmitBtn">
+                    <i class="fas fa-paper-plane"></i> Send Message
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <!-- Success Message -->
+            <div class="success-message" id="contactSuccess">
+              <div class="check-icon">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <h4>Message Sent Successfully!</h4>
+              <p>Thank you for reaching out to UniHouse Kenya. We have received your message and will get back to you within 24 hours.</p>
+              <button class="btn btn-outline-primary mt-3" onclick="resetContactForm()">
+                <i class="fas fa-undo"></i> Send Another Message
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-5">
+          <!-- Map Placeholder -->
+          <div class="contact-map-placeholder mb-4">
+            <i class="fas fa-map-marked-alt"></i>
+            <h5>Our Location</h5>
+            <p>We are based in Chuka, Tharaka Nithi County, serving students and landlords across all supported Kenyan universities.</p>
+            <div class="mt-3">
+              <a href="https://maps.google.com/?q=Chuka+University+Kenya" target="_blank" rel="noopener" class="btn btn-light btn-sm">
+                <i class="fas fa-external-link-alt"></i> View on Google Maps
+              </a>
+            </div>
+          </div>
+
+          <!-- Quick Response -->
+          <div class="card mb-4">
+            <div class="card-body">
+              <h5 class="fw-bold"><i class="fas fa-bolt text-warning"></i> Quick Response</h5>
+              <p class="text-muted">We typically respond within:</p>
+              <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-envelope-open text-success me-3" style="font-size: 1.5rem;"></i>
+                <div>
+                  <strong>Email</strong><br>
+                  <small class="text-muted">Within 24 hours</small>
+                </div>
+              </div>
+              <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-phone-alt text-primary me-3" style="font-size: 1.5rem;"></i>
+                <div>
+                  <strong>Phone</strong><br>
+                  <small class="text-muted">Within 2 hours (working hours)</small>
+                </div>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="fas fa-comment-dots text-warning me-3" style="font-size: 1.5rem;"></i>
+                <div>
+                  <strong>Live Chat</strong><br>
+                  <small class="text-muted">Coming soon!</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Social Media -->
+          <div class="card mb-4">
+            <div class="card-body">
+              <h5 class="fw-bold"><i class="fas fa-share-alt"></i> Follow Us</h5>
+              <p class="text-muted">Stay connected on social media for updates and new listings.</p>
+              <div class="d-flex gap-3">
+                <a href="#" class="btn btn-outline-primary btn-lg rounded-circle" style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;">
+                  <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="btn btn-outline-info btn-lg rounded-circle" style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;">
+                  <i class="fab fa-twitter"></i>
+                </a>
+                <a href="#" class="btn btn-outline-danger btn-lg rounded-circle" style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;">
+                  <i class="fab fa-instagram"></i>
+                </a>
+                <a href="#" class="btn btn-outline-success btn-lg rounded-circle" style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;">
+                  <i class="fab fa-whatsapp"></i>
+                </a>
+                <a href="#" class="btn btn-outline-secondary btn-lg rounded-circle" style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;">
+                  <i class="fab fa-linkedin-in"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Section -->
+      <div class="row mt-5">
+        <div class="col-12">
+          <div class="faq-section">
+            <div class="text-center mb-4">
+              <h4 class="fw-bold"><i class="fas fa-question-circle text-primary"></i> Frequently Asked Questions</h4>
+              <p class="text-muted">Quick answers to common questions about UniHouse Kenya</p>
+            </div>
+            <div class="accordion" id="faqAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                    How do I register as a student?
+                  </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                  <div class="accordion-body">
+                    Simply click on "Login / Register" at the top of the page, select "Student" as your role, fill in your details, and create an account. Once registered, you can browse houses, save favorites, and contact landlords.
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                    How can landlords list their properties?
+                  </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                  <div class="accordion-body">
+                    Register as a "Landlord", then log in and click "Post House" from your dashboard. Fill in the property details including price, location, amenities, and photos. Your listing will be visible to students searching near the selected university.
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                    Is there a fee to use UniHouse?
+                  </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                  <div class="accordion-body">
+                    Registration and browsing are completely free for both students and landlords. There are no listing fees or hidden charges. We believe in making student accommodation accessible to everyone.
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                    How do I contact a landlord about a listing?
+                  </button>
+                </h2>
+                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                  <div class="accordion-body">
+                    Open the listing you're interested in, scroll down to the "Contact Landlord" form on the right side, fill in your name, email, and message, then click "Send Inquiry". The landlord will receive your message and contact you directly.
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                    Can I save houses to view later?
+                  </button>
+                </h2>
+                <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                  <div class="accordion-body">
+                    Yes! When logged in as a student, click the heart icon on any listing to save it to your bookmarks. You can view all your saved houses from your Dashboard or the "Saved" section in the navigation menu.
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                    Which universities are currently supported?
+                  </button>
+                </h2>
+                <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                  <div class="accordion-body">
+                    We currently support Chuka University, Tharakanithi University, University of Embu, Meru University of Science & Technology, Dedan Kimathi University of Technology, Karatina University, Nyeri National Polytechnic, Mount Kenya University, Kenya Methodist University, and Embu College. More universities are being added regularly.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="main-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    initDB();
+    renderNavigation();
+    renderFooter();
+
+    // Handle contact form submission
+    function handleContactSubmit(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('contactName').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const phone = document.getElementById('contactPhone').value.trim();
+      const subject = document.getElementById('contactSubject').value;
+      const message = document.getElementById('contactMessage').value.trim();
+      const sendCopy = document.getElementById('contactCopy').checked;
+
+      // Validation
+      if (!name || !email || !subject || !message) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        showToast('Please enter a valid email address', 'error');
+        return;
+      }
+
+      // Get current user info if logged in
+      const user = getCurrentUser();
+
+      const contactMsg = {
+        name,
+        email,
+        phone: phone || 'Not provided',
+        subject,
+        message,
+        sendCopy,
+        userId: user ? user.id : null,
+        userRole: user ? user.role : 'guest'
+      };
+
+      const result = addContactMessage(contactMsg);
+
+      if (result.success) {
+        // Show success state
+        document.getElementById('contactForm').style.display = 'none';
+        document.getElementById('contactSuccess').style.display = 'block';
+        
+        showToast('Message sent successfully!', 'success');
+
+        // If send copy was checked, show a toast
+        if (sendCopy) {
+          showToast('A copy has been sent to your email', 'info');
+        }
+      } else {
+        showToast('Failed to send message. Please try again.', 'error');
+      }
+    }
+
+    // Reset contact form
+    function resetContactForm() {
+      document.getElementById('contactForm').reset();
+      document.getElementById('contactForm').style.display = 'block';
+      document.getElementById('contactSuccess').style.display = 'none';
+    }
+
+    // Pre-fill form if user is logged in
+    function prefillForm() {
+      const user = getCurrentUser();
+      if (user) {
+        document.getElementById('contactName').value = user.name || '';
+        document.getElementById('contactEmail').value = user.email || '';
+        document.getElementById('contactPhone').value = user.phone || '';
+      }
+    }
+
+    prefillForm();
+  </script>
+</body>
+</html>

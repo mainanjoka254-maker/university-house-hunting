@@ -121,7 +121,7 @@ function getUrlParam(param) {
 
 // ============ FILTER LISTINGS BY DISTANCE ============
 function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371; // Earth's radius in km
+  const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
   const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -155,17 +155,20 @@ function renderNavigation() {
         <li class="nav-item"><a class="nav-link" href="listings.html"><i class="fas fa-search"></i>Browse</a></li>
         <li class="nav-item"><a class="nav-link" href="dashboard.html"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="listings.html?bookmarks=true"><i class="fas fa-heart"></i>Saved</a></li>
+        <li class="nav-item"><a class="nav-link" href="contact.html"><i class="fas fa-headset"></i>Contact</a></li>
       `;
     } else if (user.role === 'landlord') {
       navLinks = `
         <li class="nav-item"><a class="nav-link" href="dashboard.html"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="post-listing.html"><i class="fas fa-plus-circle"></i>Post House</a></li>
         <li class="nav-item"><a class="nav-link" href="listings.html?my=true"><i class="fas fa-list"></i>My Listings</a></li>
+        <li class="nav-item"><a class="nav-link" href="contact.html"><i class="fas fa-headset"></i>Contact</a></li>
       `;
     } else if (user.role === 'admin') {
       navLinks = `
         <li class="nav-item"><a class="nav-link" href="admin.html"><i class="fas fa-cog"></i>Admin Panel</a></li>
         <li class="nav-item"><a class="nav-link" href="listings.html"><i class="fas fa-search"></i>Browse</a></li>
+        <li class="nav-item"><a class="nav-link" href="contact.html"><i class="fas fa-headset"></i>Contact</a></li>
       `;
     }
     
@@ -201,6 +204,7 @@ function renderNavigation() {
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
               <li class="nav-item"><a class="nav-link" href="listings.html"><i class="fas fa-search"></i>Browse Houses</a></li>
+              <li class="nav-item"><a class="nav-link" href="contact.html"><i class="fas fa-headset"></i>Contact</a></li>
             </ul>
             <ul class="navbar-nav">
               <li class="nav-item"><a class="nav-link" href="auth.html"><i class="fas fa-sign-in-alt"></i>Login / Register</a></li>
@@ -240,6 +244,7 @@ function renderFooter() {
               <li><a href="listings.html"><i class="fas fa-chevron-right"></i> Browse Houses</a></li>
               <li><a href="auth.html"><i class="fas fa-chevron-right"></i> Register as Student</a></li>
               <li><a href="auth.html"><i class="fas fa-chevron-right"></i> Register as Landlord</a></li>
+              <li><a href="contact.html"><i class="fas fa-chevron-right"></i> Contact Us</a></li>
             </ul>
           </div>
           <div class="col-md-4 mb-3">
